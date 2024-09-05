@@ -50,7 +50,6 @@ st.markdown("<div class='banner'></div>", unsafe_allow_html=True)
 # Dashboard title and description
 st.title("Financial Statements Dashboard")
 st.image("https://img.freepik.com/premium-vector/business-statistics-financial-analytics-market-trend-analysis-vector-concept-illustration_92926-2486.jpg", caption="Trend Analysis and Data Insights", use_column_width=True)
-st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRViRfutvNG9i9GtCPAC6qiwcK_uIOvKU0QP-zvFl3iMHKpUvAvStpetXH8o2AQ_fA4tBg&usqp=CAU", use_column_width=False)
 
 # Radio buttons for navigation
 page = st.sidebar.radio("Select Sheets", ["Balance Sheet", "Profit & Loss", "KPI"])
