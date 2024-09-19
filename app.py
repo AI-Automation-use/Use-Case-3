@@ -56,7 +56,7 @@ st.markdown("<div class='banner'></div>", unsafe_allow_html=True)
 # Dashboard title and description
 st.title("Financial Statements Dashboard")
 st.image("https://img.freepik.com/premium-vector/business-statistics-financial-analytics-market-trend-analysis-vector-concept-illustration_92926-2486.jpg", caption="Trend Analysis and Data Insights", use_column_width=True)
-st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRViRfutvNG9i9GtCPAC6qiwcK_uIOvKU0QP-zvFl3iMHKpUvAvStpetXH8o2AQ_fA4tBg&usqp=CAU", use_column_width=False)
+#st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRViRfutvNG9i9GtCPAC6qiwcK_uIOvKU0QP-zvFl3iMHKpUvAvStpetXH8o2AQ_fA4tBg&usqp=CAU", use_column_width=False)
 
 # Radio buttons for navigation
 page = st.sidebar.radio("Select Sheets", ["Balance Sheet", "Profit & Loss", "KPI"])
@@ -65,8 +65,8 @@ page = st.sidebar.radio("Select Sheets", ["Balance Sheet", "Profit & Loss", "KPI
 if 'uploaded_files' not in st.session_state:
     st.session_state['uploaded_files'] = []
 
-# if 'balance_files_processed' not in st.session_state:
-#     st.session_state['balance_files_processed'] = False
+if 'balance_files_processed' not in st.session_state:
+     st.session_state['balance_files_processed'] = False
 if 'balance_data_frames' not in st.session_state:
     st.session_state['balance_data_frames'] = []
 if 'balance_results' not in st.session_state:
@@ -141,13 +141,13 @@ def extract_data_from_pdf_bs(pdf_file, heading_map, conversion_factor, pdf_filen
  
     for page_num in range(total_pages):
         page_text = doc.load_page(page_num).get_text("text")
-        st.write(f"Debug: Reading page {page_num + 1} of {pdf_filename}")
-        st.write(f"Debug: Page content in {pdf_filename}: {page_text[:500]}...")  # Output the first 500 characters of the page
+        #st.write(f"Debug: Reading page {page_num + 1} of {pdf_filename}")
+        #st.write(f"Debug: Page content in {pdf_filename}: {page_text[:500]}...")  # Output the first 500 characters of the page
  
         # Look for the Consolidated Balance Sheet pattern
         match = re.search(consolidated_bs_pattern, page_text, re.IGNORECASE)
         if not match:
-            st.write(f"Debug: Consolidated Balance Sheet pattern not found on page {page_num + 1} of {pdf_filename}")
+            #st.write(f"Debug: Consolidated Balance Sheet pattern not found on page {page_num + 1} of {pdf_filename}")
             continue
  
         # Check if this page has the required headings
@@ -168,7 +168,7 @@ def extract_data_from_pdf_bs(pdf_file, heading_map, conversion_factor, pdf_filen
                 data = extract_values(combined_text, heading_map, conversion_factor, pdf_filename)
                 return data, date_columns
  
-    st.write(f"Debug: No relevant data found in file: {pdf_filename}")
+    #st.write(f"Debug: No relevant data found in file: {pdf_filename}")
     return None, None
 
 
@@ -202,6 +202,7 @@ def extract_date_columns(text):
                 continue
     return date_list
 
+    
 def download_files(company_symbol):
     url = f"https://www.nseindia.com/api/corp-info?symbol={company_symbol}&corpType=annualreport&market=cm"
     headers = {
@@ -589,13 +590,15 @@ def aggregate_data_single_row_merged(search_terms, data_frames_info, selected_fy
     return aggregate_results
 
 
+import zipfile
+
 def initialize_download_and_process():
     # Path for the output Excel file
     output_excel_file_path = "peers_data_bs_demo.xlsx"
 
     # Check if the data has already been processed
     if 'processed_data' not in st.session_state or 'fy_columns' not in st.session_state:
-        with st.spinner("Downloading and processing files..."):
+        with st.spinner("processing files..."):
             # Define the companies and their respective units
             companies = {
                 "TCS": "crores",
@@ -635,7 +638,7 @@ def initialize_download_and_process():
                             "Total current liabilities": ["Total current liabilities", "Total Current Liabilities","Total current liabilities","Total current liabilities"],
                             "Total equity and liabilities": ["Total equity and liabilities", "Total Equity and Liabilities", "TOTAL EQUITY AND LIABILITIES","TOTAL EQUITY AND LIABILITIES","Total equity and liabilities"]
                                 
-                        }  
+                        }   
 
                         # Initialize the final DataFrame with the required headings
                         final_data = pd.DataFrame(columns=["Heading"] + list(heading_map.keys()))
@@ -649,15 +652,18 @@ def initialize_download_and_process():
 
                             if file_name.endswith(".zip"):
                                 # Handle ZIP file
-                                with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                                    pdf_file_names = [file for file in zip_ref.namelist() if file.endswith('.pdf')]
-                                    for pdf_file_name in pdf_file_names:
-                                        if pdf_file_name not in processed_files:
-                                            with zip_ref.open(pdf_file_name) as pdf_file:
-                                                extracted_data, extracted_date_columns = extract_data_from_pdf_bs(pdf_file.read(), heading_map, conversion_factor, pdf_file_name)
-                                                if extracted_data and extracted_date_columns:
-                                                    process_extracted_data(final_data, extracted_data, extracted_date_columns, date_columns_set)
-                                                    processed_files.add(pdf_file_name)
+                                try:
+                                    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                                        pdf_file_names = [file for file in zip_ref.namelist() if file.endswith('.pdf')]
+                                        for pdf_file_name in pdf_file_names:
+                                            if pdf_file_name not in processed_files:
+                                                with zip_ref.open(pdf_file_name) as pdf_file:
+                                                    extracted_data, extracted_date_columns = extract_data_from_pdf_bs(pdf_file.read(), heading_map, conversion_factor, pdf_file_name)
+                                                    if extracted_data and extracted_date_columns:
+                                                        process_extracted_data(final_data, extracted_data, extracted_date_columns, date_columns_set)
+                                                        processed_files.add(pdf_file_name)
+                                except zipfile.BadZipFile:
+                                    st.error(f"The file {file_name} is not a valid ZIP file. Skipping.")
                             elif file_name.endswith(".pdf"):
                                 # Handle PDF file
                                 if file_name not in processed_files:
@@ -668,7 +674,8 @@ def initialize_download_and_process():
                                             process_extracted_data(final_data, extracted_data, extracted_date_columns, date_columns_set)
                                             processed_files.add(file_name)
                                         else:
-                                            st.write(f"Debug: No data extracted from file: {file_name}")
+                                            #st.write(f"Debug: No data extracted from file: {file_name}")
+                                            continue
 
                         # Remove the initialized columns used for structure
                         final_data = final_data.drop(columns=list(heading_map.keys()), axis=1, errors='ignore')
@@ -693,7 +700,6 @@ def initialize_download_and_process():
 
 # Ensure the initialization is done only once
 initialize_download_and_process()
-
 
 # Function for Balance Sheet Page
 def filter_none_rows(df):
